@@ -100,7 +100,7 @@ public class ExcelAnalysisService {
                 //创建表语句 sql
                 String tableCreateSql = getTableCreateSql(tableBaseInfoBo, sheetFields, dataTypeMappingBos);
                 log.info(String.format("表名: [%s].[%s] ----建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), tableCreateSql));
-                File tableCreateSqlFile = new File(dir.getPath(), String.format("create_%s_%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableCreateSqlFile = new File(dir.getPath(), String.format("CREATE_%s_%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableCreateSqlFile, ENCODING, userTableSpace, dropTable, tableCreateSql);
 
                 //执行创建语句 sh
@@ -108,7 +108,7 @@ public class ExcelAnalysisService {
                 String showCreateDate = "echo ${create_date}";
                 String tableCreate = String.format("hive --hiveconf yyyymmdd=${create_date} -f create_%s_${create_date}.sql", tableBaseInfoBo.getTableName());
                 log.info(String.format("表名: [%s].[%s] ----执行建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), createDate + showCreateDate + tableCreate));
-                File tableCreateFile = new File(dir.getPath(), String.format("exec_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableCreateFile = new File(dir.getPath(), String.format("EXEC_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableCreateFile, ENCODING, createDate, showCreateDate, tableCreate);
 
                 //执行加载语句 sh
@@ -116,13 +116,13 @@ public class ExcelAnalysisService {
                 String showLoadDate = "echo ${load_date}";
                 String tableLoadData = String.format("hive -e 'load data local inpath '%s' overwrite into table %s.%s_${load_date}'", tableBaseInfoBo.getLocation(), tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName());
                 log.info(String.format("表名: [%s].[%s] ----执行加载语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), loadDate + showLoadDate + tableLoadData));
-                File tableLoadDataFile = new File(dir.getPath(), String.format("put_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableLoadDataFile = new File(dir.getPath(), String.format("PUT_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadDataFile, ENCODING, loadDate, showLoadDate, tableLoadData);
 
                 //校验语句 sql
                 String tableLoadCheckSql = String.format("select count(1) from %s.%s_%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF);
                 log.info(String.format("表名: [%s].[%s] ----校验语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), tableLoadCheckSql));
-                File tableLoadCheckSqlFile = new File(dir.getPath(), String.format("check_%s_%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableLoadCheckSqlFile = new File(dir.getPath(), String.format("CHECK_%s_%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadCheckSqlFile, ENCODING, tableLoadCheckSql);
 
                 tableCreateSqls.add(tableCreateSql);
