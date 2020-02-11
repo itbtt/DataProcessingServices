@@ -1,0 +1,5 @@
+server:
+  port: 8580
+
+logging:
+  config: classpath:logback-spring-prod.xml
