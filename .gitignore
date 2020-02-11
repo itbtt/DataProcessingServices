@@ -17,6 +17,7 @@
 *.ipr
 *.sql
 *.sh
+*.log
 
 ### NetBeans ###
 /nbproject/private/
