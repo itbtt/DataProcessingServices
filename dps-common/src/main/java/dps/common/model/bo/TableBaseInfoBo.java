@@ -25,6 +25,8 @@ public class TableBaseInfoBo implements Serializable {
 
     private String location;
 
+    private String srcFileName;
+
     private String tgtLocation;
 
     private String zipFile;
@@ -67,5 +69,9 @@ public class TableBaseInfoBo implements Serializable {
 
     public void setZipFile(String zipFile) {
         this.zipFile = zipFile.trim();
+    }
+
+    public void setSrcFileName(String srcFileName) {
+        this.srcFileName = srcFileName.trim();
     }
 }

@@ -34,6 +34,8 @@ public class ExcelAnalysisService {
 
     public static final String ENCODING = "UTF-8";
 
+    public static final String FILE_SEPARATOR = "/";
+
     public ExcelAnalysisService() {
         throw new Error("工具类不允许实例化！");
     }
@@ -98,7 +100,7 @@ public class ExcelAnalysisService {
 
                 //执行创建语句 sh
                 String createDate = "tx_date=$1";
-                String formatCreateDate = "load_date=${tx_date//-/}";
+                String formatCreateDate = "create_date=${tx_date//-/}";
                 String showCreateDate = "echo ${create_date}";
                 String tableCreate = String.format("hive --hiveconf yyyymmdd=${create_date} -f create_%s_${create_date}.sql", tableBaseInfoBo.getTableName());
                 log.info(String.format("表名: [%s].[%s] ----执行建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), createDate + formatCreateDate + showCreateDate + tableCreate));
@@ -106,10 +108,17 @@ public class ExcelAnalysisService {
                 write(tableCreateFile, ENCODING, shell, createDate, formatCreateDate, showCreateDate, tableCreate);
 
                 //执行加载语句 sh
+                String location = tableBaseInfoBo.getLocation();
+                if (location.endsWith(FILE_SEPARATOR)) {
+                    location = location + "${load_date}" + FILE_SEPARATOR + tableBaseInfoBo.getSrcFileName();
+                } else {
+                    location = location + FILE_SEPARATOR + "${load_date}" + FILE_SEPARATOR + tableBaseInfoBo.getSrcFileName();
+                }
+
                 String loadDate = "tx_date=$1";
                 String formatLoadDate = "load_date=${tx_date//-/}";
                 String showLoadDate = "echo ${load_date}";
-                String tableLoadData = String.format("hive -e \"load data local inpath '%s' overwrite into table %s.%s_${load_date}\"", tableBaseInfoBo.getLocation(), tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName());
+                String tableLoadData = String.format("hive -e \"load data local inpath '%s' overwrite into table %s.%s_${load_date}\"", location, tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName());
                 log.info(String.format("表名: [%s].[%s] ----执行加载语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), loadDate + formatLoadDate + showLoadDate + tableLoadData));
                 File tableLoadDataFile = new File(dir.getPath(), String.format("PUT_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadDataFile, ENCODING, shell, loadDate, formatLoadDate, showLoadDate, tableLoadData);
@@ -200,8 +209,9 @@ public class ExcelAnalysisService {
             tableBaseInfoBo.setFileFormat(sheetRow.getCell(5).getStringCellValue());
             tableBaseInfoBo.setFields(sheetRow.getCell(6).getStringCellValue());
             tableBaseInfoBo.setLocation(sheetRow.getCell(7).getStringCellValue());
-            tableBaseInfoBo.setTgtLocation(sheetRow.getCell(8).getStringCellValue());
-            tableBaseInfoBo.setZipFile(sheetRow.getCell(9).getStringCellValue());
+            tableBaseInfoBo.setSrcFileName(sheetRow.getCell(8).getStringCellValue());
+            tableBaseInfoBo.setTgtLocation(sheetRow.getCell(9).getStringCellValue());
+            tableBaseInfoBo.setZipFile(sheetRow.getCell(10).getStringCellValue());
 
             tableBaseInfoBos.add(tableBaseInfoBo);
         }
@@ -238,14 +248,14 @@ public class ExcelAnalysisService {
         String fields = getTableFieldsSql(mappingTableFieldsType(tableBaseInfoBo, tableFieldInfoBos, dataTypeMappingBos));
 
         //拼接表信息
-        String location;
-        if (tableBaseInfoBo.getTgtLocation().endsWith("/")) {
-            location = tableBaseInfoBo.getTgtLocation() + HIVE_CONF + "/" + tableBaseInfoBo.getTableName();
+        String tgtLocation;
+        if (tableBaseInfoBo.getTgtLocation().endsWith(FILE_SEPARATOR)) {
+            tgtLocation = tableBaseInfoBo.getTgtLocation() + HIVE_CONF + FILE_SEPARATOR + tableBaseInfoBo.getTableName();
         } else {
-            location = tableBaseInfoBo.getTgtLocation() + "/" + HIVE_CONF + "/" + tableBaseInfoBo.getTableName();
+            tgtLocation = tableBaseInfoBo.getTgtLocation() + FILE_SEPARATOR + HIVE_CONF + FILE_SEPARATOR + tableBaseInfoBo.getTableName();
         }
         String info = String.format("COMMENT '%s' row format delimited fields terminated by '%s' stored as %s location '%s'",
-                tableBaseInfoBo.getTableComment(), tableBaseInfoBo.getFields(), tableBaseInfoBo.getFileFormat(), location);
+                tableBaseInfoBo.getTableComment(), tableBaseInfoBo.getFields(), tableBaseInfoBo.getFileFormat(), tgtLocation);
 
         //sql语句
         sb.append(String.format("create external table if not exists %s.%s_%s(%s)%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF, fields, info));
