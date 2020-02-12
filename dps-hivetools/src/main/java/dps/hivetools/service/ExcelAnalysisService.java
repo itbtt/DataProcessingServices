@@ -30,7 +30,7 @@ public class ExcelAnalysisService {
 
     public static final String MAPPING_SHRRT = "DATA_TYPE_MAPPING";
 
-    public static final String HIVE_CONF = "${hiveconf:yyyymmdd}";
+    public static final String HIVE_CONF = "${hiveconf:tx_date}";
 
     public static final String ENCODING = "UTF-8";
 
@@ -88,12 +88,12 @@ public class ExcelAnalysisService {
                 String userTableSpace = String.format("use %s;", tableBaseInfoBo.getTableSpace());
 
                 //删除历史表
-                String dropTable = String.format("drop table if exists %s.%s_%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF);
+                String dropTable = String.format("drop table if exists %s.%s%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF);
 
                 //创建表语句 sql
                 String tableCreateSql = getTableCreateSql(tableBaseInfoBo, sheetFields, dataTypeMappingBos);
                 log.info(String.format("表名: [%s].[%s] ----建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), tableCreateSql));
-                File tableCreateSqlFile = new File(dir.getPath(), String.format("CREATE_%s_%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableCreateSqlFile = new File(dir.getPath(), String.format("CREATE_%s%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableCreateSqlFile, ENCODING, userTableSpace, dropTable, tableCreateSql);
 
                 String shell = "#! /bin/bash" + "\r\n";
@@ -102,9 +102,9 @@ public class ExcelAnalysisService {
                 String createDate = "tx_date=$1";
                 String formatCreateDate = "create_date=${tx_date//-/}";
                 String showCreateDate = "echo ${create_date}";
-                String tableCreate = String.format("hive --hiveconf yyyymmdd=${create_date} -f create_%s_${create_date}.sql", tableBaseInfoBo.getTableName());
+                String tableCreate = String.format("hive --hiveconf tx_date=${create_date} -f CREATE_%s${create_date}.sql", tableBaseInfoBo.getTableName());
                 log.info(String.format("表名: [%s].[%s] ----执行建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), createDate + formatCreateDate + showCreateDate + tableCreate));
-                File tableCreateFile = new File(dir.getPath(), String.format("EXEC_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableCreateFile = new File(dir.getPath(), String.format("EXEC_%s%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableCreateFile, ENCODING, shell, createDate, formatCreateDate, showCreateDate, tableCreate);
 
                 //执行加载语句 sh
@@ -118,15 +118,15 @@ public class ExcelAnalysisService {
                 String loadDate = "tx_date=$1";
                 String formatLoadDate = "load_date=${tx_date//-/}";
                 String showLoadDate = "echo ${load_date}";
-                String tableLoadData = String.format("hive -e \"load data local inpath '%s' overwrite into table %s.%s_${load_date}\"", location, tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName());
+                String tableLoadData = String.format("hive -e \"load data local inpath '%s' overwrite into table %s.%s${load_date}\"", location, tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName());
                 log.info(String.format("表名: [%s].[%s] ----执行加载语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), loadDate + formatLoadDate + showLoadDate + tableLoadData));
-                File tableLoadDataFile = new File(dir.getPath(), String.format("PUT_%s_%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableLoadDataFile = new File(dir.getPath(), String.format("PUT_%s%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadDataFile, ENCODING, shell, loadDate, formatLoadDate, showLoadDate, tableLoadData);
 
                 //校验语句 sql
-                String tableLoadCheckSql = String.format("select count(1) from %s.%s_%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF);
+                String tableLoadCheckSql = String.format("select count(1) from %s.%s%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF);
                 log.info(String.format("表名: [%s].[%s] ----校验语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), tableLoadCheckSql));
-                File tableLoadCheckSqlFile = new File(dir.getPath(), String.format("CHECK_%s_%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
+                File tableLoadCheckSqlFile = new File(dir.getPath(), String.format("CHECK_%s%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadCheckSqlFile, ENCODING, tableLoadCheckSql);
             }
         }
@@ -258,7 +258,7 @@ public class ExcelAnalysisService {
                 tableBaseInfoBo.getTableComment(), tableBaseInfoBo.getFields(), tableBaseInfoBo.getFileFormat(), tgtLocation);
 
         //sql语句
-        sb.append(String.format("create external table if not exists %s.%s_%s(%s)%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF, fields, info));
+        sb.append(String.format("create external table if not exists %s.%s%s(%s)%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF, fields, info));
         return sb.toString();
     }
 
