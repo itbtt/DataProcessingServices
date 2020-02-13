@@ -46,7 +46,8 @@ public class ExcelAnalysisService {
      * @param file 上传的Excel
      * @return 多表创建SQL字符串
      */
-    public static void analysis(MultipartFile file, String fileName) throws Exception {
+    public static List<String> analysis(MultipartFile file, String fileName) throws Exception {
+        List<String> filePaths = new ArrayList<>();
         try (
                 InputStream in = file.getInputStream();
                 Workbook workbook = judegExcelEdition(fileName) ? new XSSFWorkbook(in) : new HSSFWorkbook(in)
@@ -95,6 +96,7 @@ public class ExcelAnalysisService {
                 log.info(String.format("表名: [%s].[%s] ----建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), tableCreateSql));
                 File tableCreateSqlFile = new File(dir.getPath(), String.format("CREATE_%s%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableCreateSqlFile, ENCODING, userTableSpace, dropTable, tableCreateSql);
+                filePaths.add(tableCreateSqlFile.getAbsolutePath());
 
                 String shell = "#! /bin/bash" + "\r\n";
 
@@ -106,6 +108,7 @@ public class ExcelAnalysisService {
                 log.info(String.format("表名: [%s].[%s] ----执行建表语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), createDate + formatCreateDate + showCreateDate + tableCreate));
                 File tableCreateFile = new File(dir.getPath(), String.format("EXEC_%s%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableCreateFile, ENCODING, shell, createDate, formatCreateDate, showCreateDate, tableCreate);
+                filePaths.add(tableCreateFile.getAbsolutePath());
 
                 //执行加载语句 sh
                 String location = tableBaseInfoBo.getLocation();
@@ -122,14 +125,17 @@ public class ExcelAnalysisService {
                 log.info(String.format("表名: [%s].[%s] ----执行加载语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), loadDate + formatLoadDate + showLoadDate + tableLoadData));
                 File tableLoadDataFile = new File(dir.getPath(), String.format("PUT_%s%s.sh", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadDataFile, ENCODING, shell, loadDate, formatLoadDate, showLoadDate, tableLoadData);
+                filePaths.add(tableLoadDataFile.getAbsolutePath());
 
                 //校验语句 sql
                 String tableLoadCheckSql = String.format("select count(1) from %s.%s%s;", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), HIVE_CONF);
                 log.info(String.format("表名: [%s].[%s] ----校验语句：[%s]", tableBaseInfoBo.getTableSpace(), tableBaseInfoBo.getTableName(), tableLoadCheckSql));
                 File tableLoadCheckSqlFile = new File(dir.getPath(), String.format("CHECK_%s%s.sql", tableBaseInfoBo.getTableName(), NDateUtil.getDays()));
                 write(tableLoadCheckSqlFile, ENCODING, tableLoadCheckSql);
+                filePaths.add(tableLoadCheckSqlFile.getAbsolutePath());
             }
         }
+        return filePaths;
     }
 
     /**

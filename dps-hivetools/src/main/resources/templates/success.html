@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+>
+<head>
+    <meta charset="UTF-8"/>
+    <title>Insert title here</title>
+</head>
+<body>
+<h1 th:inlines="text">数据分析[解析成功！]</h1>
+
+<table>
+    <tr>
+        <th>生成文件的路径</th>
+    </tr>
+    <tr th:each="filePath : ${filePaths}">
+        <td th:text="${filePath}"/>
+    </tr>
+</table>
+</body>
+</html>
