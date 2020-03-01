@@ -153,7 +153,7 @@ public class ExcelAnalysisService {
         ) {
             for (String content : contents) {
                 osw.write(content);
-                osw.write("\r\n");
+                osw.write("\n");
             }
             osw.flush();
         }
