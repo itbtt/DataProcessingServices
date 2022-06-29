@@ -20,7 +20,7 @@
         <dps.version>1.0-SNAPSHOT</dps.version>
         <spring.boot.dependencies>1.5.21.RELEASE</spring.boot.dependencies>
         <lombok.version>1.16.8</lombok.version>
-        <poi.version>3.17</poi.version>
+        <poi.version>4.1.1</poi.version>
         <poi-ooxml.version>3.17</poi-ooxml.version>
     </properties>
 
