@@ -21,7 +21,7 @@
         <spring.boot.dependencies>1.5.21.RELEASE</spring.boot.dependencies>
         <lombok.version>1.16.8</lombok.version>
         <poi.version>3.17</poi.version>
-        <poi-ooxml.version>3.17</poi-ooxml.version>
+        <poi-ooxml.version>5.4.0</poi-ooxml.version>
     </properties>
 
     <dependencyManagement>
